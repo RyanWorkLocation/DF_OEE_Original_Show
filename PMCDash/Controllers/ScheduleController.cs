@@ -63,37 +63,59 @@ namespace PMCDash.Controllers
             };
             #region 撈取排程資料
             //取得工單資料
-            var sqlStr = @$"SELECT TOP(200)
-                            a.OrderID,
-                            a.OPID,
-                            b.OPLTXA1,
-                            c.[CustomerInfo],
-                            d.[Name],
-                            b.MAKTX,
-                            a.OrderQTY,
-                            a.QtyGood,
-                            b.StartTime,
-                            b.EndTime,
-                            b.AssignDate,
-	                        WIPSTATUS = 
-	                        CASE WHEN b.StartTime is not null THEN a.WIPEvent ELSE -1 END,
-                            DelayDays = 
-                                CASE 
-                                    WHEN a.EndTime IS NOT NULL THEN 
-                                        CASE WHEN DATEDIFF(DAY, b.AssignDate, a.EndTime) < 0 THEN 0 ELSE DATEDIFF(DAY, b.AssignDate, a.EndTime) END
-                                    ELSE 
-                                        CASE WHEN DATEDIFF(DAY, b.AssignDate, GETDATE()) < 0 THEN 0 ELSE DATEDIFF(DAY, b.AssignDate, GETDATE()) END
-                                END
-                        FROM 
-                            {_ConnectStr.APSDB}.[dbo].[WIP] AS a
-                        INNER JOIN 
-                            {_ConnectStr.APSDB}.[dbo].[Assignment] AS b ON a.OrderID = b.OrderID AND a.OPID = b.OPID
-                        INNER JOIN {_ConnectStr.APSDB}.[dbo].[OrderOverview] as c ON b.ERPOrderID=c.OrderID
-                        INNER JOIN {_ConnectStr.MRPDB}.[dbo].[Part] as d ON b.maktx = d.number
-                        ";
+            var sqlStr = @$"WITH RankedWIP AS (
+                            SELECT 
+                                a.OrderID,
+                                a.OPID,
+                                b.OPLTXA1,
+                                c.[CustomerInfo],
+                                d.[Name],
+                                b.MAKTX,
+                                a.OrderQTY,
+                                a.QtyGood,
+                                b.StartTime,
+                                b.EndTime,
+                                b.AssignDate,
+                                WIPSTATUS = 
+                                    CASE WHEN b.StartTime IS NOT NULL THEN a.WIPEvent ELSE -1 END,
+                                DelayDays = 
+                                    CASE 
+                                        WHEN a.EndTime IS NOT NULL THEN 
+                                            CASE WHEN DATEDIFF(DAY, b.AssignDate, a.EndTime) < 0 THEN 0 ELSE DATEDIFF(DAY, b.AssignDate, a.EndTime) END
+                                        ELSE 
+                                            CASE WHEN DATEDIFF(DAY, b.AssignDate, GETDATE()) < 0 THEN 0 ELSE DATEDIFF(DAY, b.AssignDate, GETDATE()) END
+                                    END,
+                                ROW_NUMBER() OVER (PARTITION BY 
+                                    CASE WHEN b.StartTime IS NOT NULL THEN a.WIPEvent ELSE -1 END 
+                                    ORDER BY a.OrderID DESC, a.OPID DESC) AS RowNum
+                            FROM 
+                                {_ConnectStr.APSDB}.[dbo].[WIP] AS a
+                            INNER JOIN 
+                                {_ConnectStr.APSDB}.[dbo].[Assignment] AS b ON a.OrderID = b.OrderID AND a.OPID = b.OPID
+                            INNER JOIN 
+                                {_ConnectStr.APSDB}.[dbo].[OrderOverview] AS c ON b.ERPOrderID = c.OrderID
+                            INNER JOIN 
+                                {_ConnectStr.MRPDB}.[dbo].[Part] AS d ON b.maktx = d.number
+                        )
+                        SELECT 
+                            OrderID,
+                            OPID,
+                            OPLTXA1,
+                            CustomerInfo,
+                            Name,
+                            MAKTX,
+                            OrderQTY,
+                            QtyGood,
+                            StartTime,
+                            EndTime,
+                            AssignDate,
+                            WIPSTATUS,
+                            DelayDays
+                        FROM RankedWIP
+                        WHERE RowNum <= 40";
             if(!String.IsNullOrEmpty(request.DeviceName))
             {
-                sqlStr += $" WHERE b.WorkGroup='{request.DeviceName}'";
+                sqlStr += $" AND b.WorkGroup='{request.DeviceName}'";
             }
             sqlStr += "ORDER BY WIPSTATUS ASC,OrderID DESC, OPID DESC";
             using (var conn = new SqlConnection(_ConnectStr.Local))
