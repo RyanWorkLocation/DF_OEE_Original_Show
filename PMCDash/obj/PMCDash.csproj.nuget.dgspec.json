@@ -1,0 +1,87 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_V4-2_串接skymars\\PMCDash\\PMCDash\\PMCDash.csproj": {}
+  },
+  "projects": {
+    "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_V4-2_串接skymars\\PMCDash\\PMCDash\\PMCDash.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_V4-2_串接skymars\\PMCDash\\PMCDash\\PMCDash.csproj",
+        "projectName": "PMCDash",
+        "projectPath": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_V4-2_串接skymars\\PMCDash\\PMCDash\\PMCDash.csproj",
+        "packagesPath": "C:\\Users\\e11037\\.nuget\\packages\\",
+        "outputPath": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_V4-2_串接skymars\\PMCDash\\PMCDash\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\e11037\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "netcoreapp3.1"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netcoreapp3.1": {
+            "targetAlias": "netcoreapp3.1",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netcoreapp3.1": {
+          "targetAlias": "netcoreapp3.1",
+          "dependencies": {
+            "Microsoft.AspNetCore.Authentication.JwtBearer": {
+              "target": "Package",
+              "version": "[3.1.10, )"
+            },
+            "Microsoft.AspNetCore.SpaServices": {
+              "target": "Package",
+              "version": "[3.1.13, )"
+            },
+            "Microsoft.AspNetCore.SpaServices.Extensions": {
+              "target": "Package",
+              "version": "[3.1.13, )"
+            },
+            "NSwag.AspNetCore": {
+              "target": "Package",
+              "version": "[13.9.3, )"
+            },
+            "System.Data.SqlClient": {
+              "target": "Package",
+              "version": "[4.8.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.310\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
