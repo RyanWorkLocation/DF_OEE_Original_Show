@@ -95,6 +95,23 @@ namespace PMCDash.Models
         public string Status { get; set; }
     }
 
+    public class MachineStatus_Zone
+    {
+        public MachineStatus_Zone(string machineName, string status, int locationZone)
+        {
+            MachineName = machineName;
+            Status = status;
+            LocationZone = locationZone;
+        }
+
+        public string MachineName { get; set; }
+
+        public string Status { get; set; }
+
+        public int LocationZone { get; set; }
+    }
+
+
     public class DeviceList
     {
         public DeviceList(string remark, string workorderID, string opid, string maktx)

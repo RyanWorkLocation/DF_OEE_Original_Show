@@ -118,11 +118,16 @@ namespace PMCDash.Services
             }
             #endregion
 
-
+            List<string> alarmstr = new List<string> { "機台故障", "機台維修", "跳電" };
 
             for(int i=0;i<result.Count();i++)
             {
-                result[i].AlarmMSg = $"Alarm_{i + 1}";
+
+                if (!alarmstr.Exists(item=>item== result[i].AlarmMSg))
+                {
+                    result[i].AlarmMSg = $"Alarm_{i + 1}";
+                }
+                
             }
 
             return result;

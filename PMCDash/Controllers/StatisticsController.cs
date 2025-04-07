@@ -49,7 +49,7 @@ namespace PMCDash.Controllers
                         LEFT JOIN 
                             {_ConnectStr.APSDB}.[dbo].[Device] AS d ON a.DeviceID = d.remark
                         WHERE 
-                            d.SkyMars_connect = 1
+                            d.SkyMars_connect = 1 and d.Location_zone is not null
 
                         UNION ALL
 
@@ -63,7 +63,7 @@ namespace PMCDash.Controllers
 	                      FROM {_ConnectStr.APSDB}.[dbo].[WipRegisterLog] as a
 	                      INNER JOIN {_ConnectStr.APSDB}.[dbo].[Device] as b
 	                      on a.DeviceID = b.ID
-	                    where b.SkyMars_connect=0 and b.external_com=0
+	                    where b.SkyMars_connect=0 and b.external_com=0 AND b.Location_zone is not null
                     ";
             using (var conn = new SqlConnection(_ConnectStr.Local))
             {
@@ -129,20 +129,21 @@ namespace PMCDash.Controllers
             double idle = 0;
             double alarm = 0;
             double off = 0;
-            var devices = new List<MachineStatus>();
+            var devices = new List<MachineStatus_Zone>();
 
             #region 由實際生產資料統計廠區機台狀態
             //取得工單資料
             var sqlStr = @$"-- 從 skymars 來
                         SELECT 
                             a.DeviceID,
-                            a.DeviceStatus
+                            a.DeviceStatus,
+                            d.Location_Zone
                         FROM 
                             {_ConnectStr.SkyMarsDB}.[dbo].[DeviceCurrentStatus] AS a
                         LEFT JOIN 
                             {_ConnectStr.APSDB}.[dbo].[Device] AS d ON a.DeviceID = d.remark
                         WHERE 
-                            d.SkyMars_connect = 1
+                            d.SkyMars_connect = 1 and d.Location_zone is not null
 
                         UNION ALL
 
@@ -152,11 +153,11 @@ namespace PMCDash.Controllers
 	                     WHEN a.WorkOrderID is null THEN 'IDLE'
 	                     WHEN a.WorkOrderID is not null THEN 'RUN'
 	                     ELSE 'Unknown Status'
-	                     END AS DeviceStatus
+	                     END AS DeviceStatus, b.Location_Zone
 	                      FROM {_ConnectStr.APSDB}.[dbo].[WipRegisterLog] as a
 	                      INNER JOIN {_ConnectStr.APSDB}.[dbo].[Device] as b
 	                      on a.DeviceID = b.ID
-	                    where b.SkyMars_connect=0 and b.external_com=0
+	                    where b.SkyMars_connect=0 and b.external_com=0 AND b.Location_zone is not null
                     ";
             using (var conn = new SqlConnection(_ConnectStr.Local))
             {
@@ -171,9 +172,10 @@ namespace PMCDash.Controllers
                             while (SqlData.Read())
                             {
 
-                                devices.Add(new MachineStatus(
+                                devices.Add(new MachineStatus_Zone(
                                     machineName: SqlData["DeviceID"].ToString().Trim(),
-                                    status: SqlData["DeviceStatus"].ToString().Trim()
+                                    status: SqlData["DeviceStatus"].ToString().Trim(),
+                                    locationZone: Convert.ToInt16(SqlData["Location_Zone"])
 
                                     ));
                             };
@@ -181,24 +183,33 @@ namespace PMCDash.Controllers
                     }
                 }
             }
-
-            run = devices.Exists(x => x.Status == "RUN") ? devices.Where(x => x.Status == "RUN").Count() : 0;
-            idle = devices.Exists(x => x.Status == "IDLE") ? devices.Where(x => x.Status == "IDLE").Count() : 0;
-            alarm = devices.Exists(x => x.Status == "ALARM") ? devices.Where(x => x.Status == "ALARM").Count() : 0;
-            off = devices.Exists(x => x.Status == "OFF") ? devices.Where(x => x.Status == "OFF").Count() : 0;
-            #endregion
-            result.Add(new ProductionLineStatistics
-                (
-                    productionLineName: "全產線",
-                    statistics:
-                    new StatusStatistics
+            var Zone_List = new Dictionary<string, int> {
+                                                            { "1F_第一區", 1 },
+                                                            { "1F_第二區", 2 },
+                                                            { "1F_第三區", 3 },
+                                                            { "3F_第四區", 4 }
+                                                        };
+            foreach (var zone in Zone_List.Keys)
+            {
+                run = devices.Exists(x => x.Status == "RUN" && x.LocationZone == Zone_List[zone]) ? devices.Where(x => x.Status == "RUN" && x.LocationZone == Zone_List[zone]).Count() : 0;
+                idle = devices.Exists(x => x.Status == "IDLE" && x.LocationZone == Zone_List[zone]) ? devices.Where(x => x.Status == "IDLE" && x.LocationZone == Zone_List[zone]).Count() : 0;
+                alarm = devices.Exists(x => x.Status == "ALARM" && x.LocationZone == Zone_List[zone]) ? devices.Where(x => x.Status == "ALARM" && x.LocationZone == Zone_List[zone]).Count() : 0;
+                off = devices.Exists(x => x.Status == "OFF" && x.LocationZone == Zone_List[zone]) ? devices.Where(x => x.Status == "OFF" && x.LocationZone == Zone_List[zone]).Count() : 0;
+                #endregion
+                result.Add(new ProductionLineStatistics
                     (
-                        run: (int)run,
-                        idle: (int)idle,
-                        alarm: (int)alarm,
-                        off: (int)off
-                    )
-                ));
+                        productionLineName: zone,
+                        statistics:
+                        new StatusStatistics
+                        (
+                            run: (int)run,
+                            idle: (int)idle,
+                            alarm: (int)alarm,
+                            off: (int)off
+                        )
+                    ));
+            }
+            
 
             return new ActionResponse<FactoryStatisticsImformation>
             {
@@ -211,11 +222,20 @@ namespace PMCDash.Controllers
         /// </summary>       
         /// <returns></returns>
         [HttpPost("status")]
-        public ActionResponse<ProductionLineMachineImformation> GetMachineStatus([FromBody] RequestFactory prl)
+        public ActionResponse<ProductionLineMachineImformation> GetMachineStatus([FromBody] RequestFactory info)
         {
             var result = new List<MachineStatus>();
-
-
+            var Zone_List = new Dictionary<string, int> {
+                                                            { "1F_第一區", 1 },
+                                                            { "1F_第二區", 2 },
+                                                            { "1F_第三區", 3 },
+                                                            { "3F_第四區", 4 }
+                                                       };
+            var AddString = "";
+            if(!string.IsNullOrWhiteSpace(info.ProductionName))
+            {
+                AddString = $"and Location_zone={Zone_List[info.ProductionName]}";
+            }
             #region 撈取機台編號資料
             //取得工單資料
             var sqlStr = @$"-- 從 skymars 來
@@ -227,7 +247,7 @@ namespace PMCDash.Controllers
                         LEFT JOIN 
                             {_ConnectStr.APSDB}.[dbo].[Device] AS d ON a.DeviceID = d.remark
                         WHERE 
-                            d.SkyMars_connect = 1
+                            d.SkyMars_connect = 1 and d.Location_zone is not null {AddString}
 
                         UNION ALL
 
@@ -241,7 +261,7 @@ namespace PMCDash.Controllers
 	                      FROM {_ConnectStr.APSDB}.[dbo].[WipRegisterLog] as a
 	                      INNER JOIN {_ConnectStr.APSDB}.[dbo].[Device] as b
 	                      on a.DeviceID = b.ID
-	                    where b.SkyMars_connect=0 and b.external_com=0";
+	                    where b.SkyMars_connect=0 and b.external_com=0 and Location_zone is not null {AddString}";
             using (var conn = new SqlConnection(_ConnectStr.Local))
             {
                 using (var comm = new SqlCommand(sqlStr, conn))

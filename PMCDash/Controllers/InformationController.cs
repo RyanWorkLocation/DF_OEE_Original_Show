@@ -45,14 +45,15 @@ namespace PMCDash.Controllers
         [HttpGet]
         public ActionResponse<FactoryDefine> Get()
         {
-            var devices = new List<Device>();
+            //var devices = new List<Device>();
+            var devices = new Dictionary<int, List<Device>>();
             var productionLines = new List<ProductionLine>();
 
             #region 撈取機台編號資料
             //取得工單資料
-            var sqlStr = @$"SELECT distinct remark
+            var sqlStr = @$"SELECT remark, Location_zone
                             FROM {_ConnectStr.APSDB}.[dbo].[Device]
-                            WHERE external_com=0";
+                            WHERE external_com=0 and Location_zone is not null";
             using (var conn = new SqlConnection(_ConnectStr.Local))
             {
                 using (var comm = new SqlCommand(sqlStr, conn))
@@ -65,10 +66,16 @@ namespace PMCDash.Controllers
                         {
                             while (SqlData.Read())
                             {
+                                int zone = Convert.ToInt16(SqlData["Location_zone"]);
                                 string remark = SqlData["remark"].ToString().Trim();
                                 if (!string.IsNullOrEmpty(remark))
                                 {
-                                    devices.Add(new Device(remark, remark));
+                                    if (!devices.ContainsKey(zone))
+                                    {
+                                        devices.Add(zone, new List<Device>());
+                                    }
+                                    //devices.Add(new Device(remark, remark));
+                                    devices[zone].Add(new Device(remark, remark));
                                 }
 
                             };
@@ -78,10 +85,23 @@ namespace PMCDash.Controllers
             }
             #endregion
 
-
-            productionLines.Add(new ProductionLine(@$"全產線", @$"全產線"));
-            productionLines[0].Devices = devices.ToList();
+            //加入產線分區名稱
+            //productionLines.Add(new ProductionLine(@$"全產線", @$"全產線"));
+            productionLines.AddRange(new List<ProductionLine>
+            {
+                new ProductionLine(@$"1F_第一區", @$"1F_第一區"),
+                new ProductionLine(@$"1F_第二區", @$"1F_第二區"),
+                new ProductionLine(@$"1F_第三區", @$"1F_第三區"),
+                new ProductionLine(@$"3F_第四區", @$"3F_第四區"),
+            });
+            //分別加入各籠機台
+            //productionLines[0].Devices = devices.ToList();
+            for(int i=0;i< productionLines.Count;i++)
+            {
+                productionLines[i].Devices = devices[i + 1];
+            }
             var factorys = new List<Factory>();
+            //加入廠房名稱
             var facotorys = new Factory("安南新廠", "安南新廠");
             facotorys.ProductionLines = productionLines.ToList();
             factorys.Add(facotorys);
@@ -149,7 +169,7 @@ namespace PMCDash.Controllers
 	                      FROM {_ConnectStr.APSDB}.[dbo].[WipRegisterLog] as a
 	                      INNER JOIN {_ConnectStr.APSDB}.[dbo].[Device] as b
 	                      on a.DeviceID = b.ID
-	                    where b.SkyMars_connect=0 and b.external_com=0
+	                    where b.SkyMars_connect=0 and b.external_com=0 and b.Location_zone is not null
                     ";
             using (var conn = new SqlConnection(_ConnectStr.Local))
             {

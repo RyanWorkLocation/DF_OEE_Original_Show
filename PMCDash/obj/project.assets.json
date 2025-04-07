@@ -2376,6 +2376,7 @@
       "path": "microsoft.csharp/4.3.0",
       "files": [
         ".nupkg.metadata",
+        ".signature.p7s",
         "ThirdPartyNotices.txt",
         "dotnet_library_license.txt",
         "lib/MonoAndroid10/_._",
@@ -3173,6 +3174,7 @@
       "path": "runtime.native.system/4.0.0",
       "files": [
         ".nupkg.metadata",
+        ".signature.p7s",
         "ThirdPartyNotices.txt",
         "dotnet_library_license.txt",
         "lib/netstandard1.0/_._",
@@ -3201,6 +3203,7 @@
       "path": "runtime.native.system.net.http/4.0.1",
       "files": [
         ".nupkg.metadata",
+        ".signature.p7s",
         "ThirdPartyNotices.txt",
         "dotnet_library_license.txt",
         "lib/netstandard1.0/_._",
@@ -3228,6 +3231,7 @@
       "path": "runtime.win-arm64.runtime.native.system.data.sqlclient.sni/4.4.0",
       "files": [
         ".nupkg.metadata",
+        ".signature.p7s",
         "ThirdPartyNotices.txt",
         "dotnet_library_license.txt",
         "runtime.win-arm64.runtime.native.system.data.sqlclient.sni.4.4.0.nupkg.sha512",
@@ -3243,6 +3247,7 @@
       "path": "runtime.win-x64.runtime.native.system.data.sqlclient.sni/4.4.0",
       "files": [
         ".nupkg.metadata",
+        ".signature.p7s",
         "ThirdPartyNotices.txt",
         "dotnet_library_license.txt",
         "runtime.win-x64.runtime.native.system.data.sqlclient.sni.4.4.0.nupkg.sha512",
@@ -3258,6 +3263,7 @@
       "path": "runtime.win-x86.runtime.native.system.data.sqlclient.sni/4.4.0",
       "files": [
         ".nupkg.metadata",
+        ".signature.p7s",
         "ThirdPartyNotices.txt",
         "dotnet_library_license.txt",
         "runtime.win-x86.runtime.native.system.data.sqlclient.sni.4.4.0.nupkg.sha512",
@@ -4090,6 +4096,7 @@
       "path": "system.dynamic.runtime/4.3.0",
       "files": [
         ".nupkg.metadata",
+        ".signature.p7s",
         "ThirdPartyNotices.txt",
         "dotnet_library_license.txt",
         "lib/MonoAndroid10/_._",
@@ -5918,6 +5925,7 @@
       "path": "system.security.cryptography.csp/4.0.0",
       "files": [
         ".nupkg.metadata",
+        ".signature.p7s",
         "ThirdPartyNotices.txt",
         "dotnet_library_license.txt",
         "lib/MonoAndroid10/_._",
@@ -5990,6 +5998,7 @@
       "path": "system.security.cryptography.openssl/4.0.0",
       "files": [
         ".nupkg.metadata",
+        ".signature.p7s",
         "ThirdPartyNotices.txt",
         "dotnet_library_license.txt",
         "lib/netstandard1.6/System.Security.Cryptography.OpenSsl.dll",
@@ -6821,11 +6830,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_V4-2_串接skymars\\PMCDash\\PMCDash\\PMCDash.csproj",
+      "projectUniqueName": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_串接skymars_交付版\\PMCDash\\PMCDash\\PMCDash.csproj",
       "projectName": "PMCDash",
-      "projectPath": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_V4-2_串接skymars\\PMCDash\\PMCDash\\PMCDash.csproj",
+      "projectPath": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_串接skymars_交付版\\PMCDash\\PMCDash\\PMCDash.csproj",
       "packagesPath": "C:\\Users\\e11037\\.nuget\\packages\\",
-      "outputPath": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_V4-2_串接skymars\\PMCDash\\PMCDash\\obj\\",
+      "outputPath": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_串接skymars_交付版\\PMCDash\\PMCDash\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\e11037\\AppData\\Roaming\\NuGet\\NuGet.Config",
