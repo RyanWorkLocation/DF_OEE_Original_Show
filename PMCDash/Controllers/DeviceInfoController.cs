@@ -14,6 +14,10 @@ namespace PMCDash.Controllers
     public class DeviceInfoController : BaseApiController
     {
         ConnectStr _ConnectStr = new ConnectStr();
+        // 加入靜態字典來儲存每個設備的稼動率
+        private static Dictionary<string, double> _deviceUtilizationRates = new Dictionary<string, double>();
+        private static readonly object _lock = new object(); // 用於線程安全
+
         public DeviceInfoController()
         {
 
@@ -427,75 +431,58 @@ namespace PMCDash.Controllers
             }
 
             #endregion
-            var rand = new Random();
+            var temp_utilizationRate = 0.0;
+            if(DeviceStatus != "OFF")
+            {
+                // 使用設備名稱作為唯一識別碼
+                string deviceId = device.DeviceName;
+                
+                lock (_lock)
+                {
+                    if (!_deviceUtilizationRates.ContainsKey(deviceId))
+                    {
+                        // 只有在第一次呼叫時才產生隨機數
+                        var rand = new Random();
+                        temp_utilizationRate = Math.Round(65d + 25 * rand.NextDouble(), 1);
+                        _deviceUtilizationRates[deviceId] = temp_utilizationRate;
+                    }
+                    else
+                    {
+                        // 使用已儲存的值
+                        temp_utilizationRate = _deviceUtilizationRates[deviceId];
+                    }
+                }
+            }
+            else
+            {
+                temp_utilizationRate = 0d;
+                // 如果設備關閉，清除儲存的稼動率
+                lock (_lock)
+                {
+                    _deviceUtilizationRates.Remove(device.DeviceName);
+                }
+            }
+
             return new ActionResponse<OperationInfo>
             {
                 Data = new OperationInfo
                 (
-                    //utilizationRate: Math.Round(Utilization_rate * 100, 1),
-                    utilizationRate: DeviceStatus != "OFF" ? Math.Round(50d + 30 * rand.NextDouble(), 1) : 0.0,
+                    utilizationRate: temp_utilizationRate,
                     status: DeviceStatus,
                     productionProgress: tempinfo.ProductionProgress,
                     customName: tempinfo.CustomName=="-" ? "-" : tempinfo.CustomName.Split('/')[1],
                     deviceImg: "/images/device/" + tempinfo.DeviceImg,
-                    orderInfo: new OrderInformation(orderNo: tempinfo.OrderNo, oPNo: tempinfo.OPNo, opName: tempinfo.OPName,
-                    productNo: tempinfo.ProductNo, requireCount: tempinfo.RequireCount, currentCount: tempinfo.CurrentCount, dueDate: tempinfo.DueDate, customerinfo: ""))
-
+                    orderInfo: new OrderInformation(
+                        orderNo: tempinfo.OrderNo, 
+                        oPNo: tempinfo.OPNo, 
+                        opName: tempinfo.OPName,
+                        productNo: tempinfo.ProductNo, 
+                        requireCount: tempinfo.RequireCount, 
+                        currentCount: tempinfo.CurrentCount, 
+                        dueDate: tempinfo.DueDate, 
+                        customerinfo: "")
+                )
             };
-
-
-
-            //if (!string.IsNullOrEmpty(tempinfo.DeviceImg) && tempinfo.ProductNo != "-" && tempinfo.WIPEvent=="1")
-            //{
-            //    return new ActionResponse<OperationInfo>
-            //    {
-            //        Data = new OperationInfo
-            //    (
-            //        utilizationRate: Math.Round(Utilization_rate * 100, 1),
-            //        //utilizationRate: Math.Round((rand.NextDouble()*0.3+0.7)*100,1),
-            //        status: DeviceStatus,
-            //        productionProgress: tempinfo.ProductionProgress,
-            //        customName: tempinfo.CustomName.Split('/')[1],
-            //        deviceImg: "/images/device/"+ tempinfo.DeviceImg,
-            //        orderInfo: new OrderInformation(orderNo: tempinfo.OrderNo, oPNo: tempinfo.OPNo, opName: tempinfo.OPName,
-            //        productNo: tempinfo.ProductNo, requireCount: tempinfo.RequireCount, currentCount: tempinfo.CurrentCount, dueDate: tempinfo.DueDate, customerinfo:""))
-                    
-            //    };
-            //}
-            //else if(tempinfo.WIPEvent == "2")
-            //{
-            //    return new ActionResponse<OperationInfo>
-            //    {
-            //        Data = new OperationInfo
-            //    (
-            //        //utilizationRate: Math.Round((rand.NextDouble() * 0.3 + 0.7) * 100, 1),
-            //        utilizationRate: Math.Round(Utilization_rate * 100, 1),
-            //        status: DeviceStatus,
-            //        productionProgress: tempinfo.ProductionProgress,
-            //        customName: tempinfo.CustomName.Split('/')[1],
-            //        deviceImg: "/images/device/" + tempinfo.DeviceImg,
-            //        orderInfo: new OrderInformation(orderNo: tempinfo.OrderNo, oPNo: tempinfo.OPNo, opName: tempinfo.OPName,
-            //        productNo: tempinfo.ProductNo, requireCount: tempinfo.RequireCount, currentCount: tempinfo.CurrentCount, dueDate: tempinfo.DueDate, customerinfo: ""))
-
-            //    };
-            //}
-            //else
-            //{
-            //    return new ActionResponse<OperationInfo>
-            //    {
-            //        Data = new OperationInfo
-            //    (
-            //        //utilizationRate: Math.Round((rand.NextDouble() * 0.4 + 0.6) * 100, 1),
-            //        utilizationRate: Math.Round(Utilization_rate * 100, 1),
-            //        status: "IDLE",
-            //        productionProgress: tempinfo.ProductionProgress,
-            //        customName: "-",
-            //        deviceImg: "/images/device/" + tempinfo.DeviceImg,
-            //        orderInfo: new OrderInformation(orderNo: "-", oPNo: 0, opName: "-",
-            //        productNo: "-", requireCount: 0, currentCount: 0, dueDate: "-", customerinfo: "-"))
-
-            //    };
-            //}
         }
 
     }
