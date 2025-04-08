@@ -76,6 +76,7 @@ namespace PMCDash.Controllers
                                         b.remark = '{device.DeviceName}'
                                         AND b.SkyMars_connect = 0 
                                         AND b.external_com = 0
+                                        AND b.Location_zone is not null
                                     ) AS wrl ON di.DeviceName = wrl.DeviceID";
             using (var conn = new SqlConnection(_ConnectStr.Local))
             {
@@ -102,52 +103,147 @@ namespace PMCDash.Controllers
             {
                 //未聯網=>從MES撈
                 case "False":
+                    //sqlStr = @$"DECLARE @TodayStart0800 DATETIME = DATEADD(HOUR, 8, CAST(CONVERT(DATE, GETDATE()) AS DATETIME));  -- 今天早上8:00
+                    //            DECLARE @CurrentTime DATETIME = GETDATE();  -- 當前時間
+                    //            DECLARE @TotalTimeInSeconds INT = DATEDIFF(SECOND, @TodayStart0800, @CurrentTime);
+                    //            -- 今日早上8點到現在的總時間 
+                    //            --SELECT @TodayStart0800 AS TodayStart0800;
+                    //            --SELECT @TotalTimeInSeconds AS TotalTimeInSeconds;
+
+                    //            --撈出所有在時間範圍內的生產數據
+                    //            WITH OrderedData AS (
+                    //                SELECT 
+                    //                    [OrderID],
+                    //                    [OPID],
+                    //                    [WIPEvent],
+                    //                    [DeviceID],
+                    //                    CONVERT(date, CreateTime) AS Date,
+                    //                    CreateTime,
+                    //                    LAG(CreateTime) OVER (PARTITION BY [DeviceID] ORDER BY CreateTime) AS PreviousTime,
+                    //                    ROW_NUMBER() OVER (PARTITION BY [DeviceID] ORDER BY CreateTime DESC) AS RowNum
+                    //                FROM 
+                    //                    {_ConnectStr.APSDB}.[dbo].[WIPLog]
+                    //                WHERE 
+                    //                    DeviceID = '{device.DeviceName}'
+                    //              AND CreateTime >= @TodayStart0800  -- 只納入8:00之後的記錄
+                    //              AND CreateTime < @CurrentTime  -- 確保記錄在當前時間之前
+                    //            ),
+                    //            TotalData AS(
+                    //            SELECT 
+                    //                [OrderID],
+                    //                [OPID],
+                    //                [WIPEvent],
+                    //                [DeviceID],
+                    //                Date,
+                    //                CreateTime,
+                    //                PreviousTime,
+                    //                RowNum,
+                    //                CASE 
+                    //                    -- 如果是最新一筆數據且狀態為加工中，則計算開始加工至現在的總時間
+                    //                    WHEN RowNum = 1 AND WIPEvent = 1 THEN DATEDIFF(SECOND, CreateTime, GETDATE())
+                    //                    WHEN RowNum != 1 AND WIPEvent = 1 THEN NULL
+                    //                    WHEN WIPEvent IN (2, 3) AND PreviousTime IS NULL THEN NULL  -- 新增判斷條件
+                    //                    ELSE DATEDIFF(SECOND, PreviousTime, CreateTime)
+                    //                END AS ProcessingTime
+                    //            FROM 
+                    //                OrderedData)
+                    //            select DeviceID AS MachineName,
+                    //              SUM(ProcessingTime) as TotalRunTimeInSeconds,
+                    //              CAST(SUM(ProcessingTime) AS FLOAT) / @TotalTimeInSeconds AS RunTimeRatio  -- 計算運行時間比例
+                    //            from TotalData
+                    //            GROUP BY 
+                    //                DeviceID
+                    //            ORDER BY 
+                    //                DeviceID;";
                     sqlStr = @$"DECLARE @TodayStart0800 DATETIME = DATEADD(HOUR, 8, CAST(CONVERT(DATE, GETDATE()) AS DATETIME));  -- 今天早上8:00
+                                DECLARE @YesterdayStart0800 DATETIME = DATEADD(DAY, -1, @TodayStart0800);  -- 昨天早上8:00
                                 DECLARE @CurrentTime DATETIME = GETDATE();  -- 當前時間
                                 DECLARE @TotalTimeInSeconds INT = DATEDIFF(SECOND, @TodayStart0800, @CurrentTime);
-                                ---- 顯示 TodayStart0800 的值
-                                --SELECT @TodayStart0800 AS TodayStart0800;
-                                --SELECT @TotalTimeInSeconds AS TotalTimeInSeconds;
 
-                                WITH OrderedData AS (
-                                    SELECT 
+                                -- 第一步：找出該機台在昨天8點至今天期間的所有製程記錄，並按時間排序
+                                WITH AllRecords AS (
+                                    SELECT 
                                         [OrderID],
                                         [OPID],
                                         [WIPEvent],
                                         [DeviceID],
-                                        CONVERT(date, CreateTime) AS Date,
-                                        CreateTime,
-                                        LAG(CreateTime) OVER (PARTITION BY [DeviceID] ORDER BY CreateTime) AS PreviousTime,
-                                        ROW_NUMBER() OVER (PARTITION BY [DeviceID] ORDER BY CreateTime DESC) AS RowNum
-                                    FROM 
+                                        CreateTime
+                                    FROM 
                                         {_ConnectStr.APSDB}.[dbo].[WIPLog]
-                                    WHERE 
+                                    WHERE 
                                         DeviceID = '{device.DeviceName}'
-		                                AND CreateTime >= @TodayStart0800  -- 只納入8:00之後的記錄
-		                                AND CreateTime < @CurrentTime  -- 確保記錄在當前時間之前
+                                        AND CreateTime >= @YesterdayStart0800  -- 只檢查昨天8點以後的記錄
+                                        AND CreateTime < @CurrentTime
                                 ),
-                                TotalData AS(
-                                SELECT 
-                                    [OrderID],
-                                    [OPID],
-                                    [WIPEvent],
-                                    [DeviceID],
-                                    Date,
-                                    CreateTime,
-                                    PreviousTime,
-                                    RowNum,
-                                    CASE 
-                                        WHEN RowNum = 1 AND WIPEvent = 1 THEN DATEDIFF(SECOND, CreateTime, GETDATE())
-                                        WHEN RowNum != 1 AND WIPEvent = 1 THEN NULL
-                                        WHEN WIPEvent IN (2, 3) AND PreviousTime IS NULL THEN NULL  -- 新增判斷條件
-                                        ELSE DATEDIFF(SECOND, PreviousTime, CreateTime)
-                                    END AS ProcessingTime
-                                FROM 
-                                    OrderedData)
-                                select DeviceID AS MachineName,
-		                                SUM(ProcessingTime) as TotalRunTimeInSeconds,
-		                                CAST(SUM(ProcessingTime) AS FLOAT) / @TotalTimeInSeconds AS RunTimeRatio  -- 計算運行時間比例
-                                from TotalData
+                                -- 第二步：使用窗口函數找出每個開始記錄對應的結束記錄
+                                ProcessPairs AS (
+                                    SELECT 
+                                        [DeviceID],
+                                        [OrderID],
+                                        [OPID],
+                                        CreateTime AS StartTime,
+                                        LEAD(CreateTime) OVER (PARTITION BY DeviceID ORDER BY CreateTime) AS EndTime,
+                                        LEAD(WIPEvent) OVER (PARTITION BY DeviceID ORDER BY CreateTime) AS NextEvent,
+                                        WIPEvent
+                                    FROM 
+                                        AllRecords
+                                ),
+                                -- 第三步：計算每個有效製程的運行時間
+                                ValidProcesses AS (
+                                    SELECT 
+                                        [DeviceID],
+                                        [OrderID],
+                                        [OPID],
+                                        StartTime,
+                                        CASE 
+                                            -- 如果下一個事件是結束或中斷，則使用記錄的結束時間
+                                            WHEN NextEvent IN (2, 3) THEN EndTime
+                                            -- 如果是最後一個開始事件且未結束，則使用當前時間
+                                            WHEN NextEvent IS NULL AND WIPEvent = 1 THEN @CurrentTime
+                                            ELSE NULL
+                                        END AS EffectiveEndTime,
+                                        WIPEvent
+                                    FROM 
+                                        ProcessPairs
+                                    WHERE 
+                                        -- 只計算開始事件
+                                        WIPEvent = 1
+                                        -- 確保此開始事件有對應的結束，或是最後一個開始事件
+                                        AND (NextEvent IN (2, 3) OR NextEvent IS NULL)
+                                ),
+                                -- 第四步：計算今天8點以後的有效運行時間
+                                TodayRuntime AS (
+                                    SELECT 
+                                        [DeviceID],
+                                        [OrderID],
+                                        [OPID],
+                                        CASE 
+                                            -- 如果開始時間早於今天8點，則計算從今天8點開始
+                                            WHEN StartTime < @TodayStart0800 THEN @TodayStart0800
+                                            ELSE StartTime
+                                        END AS AdjustedStartTime,
+                                        EffectiveEndTime,
+                                        DATEDIFF(SECOND, 
+                                            CASE 
+                                                -- 如果開始時間早於今天8點，則計算從今天8點開始
+                                                WHEN StartTime < @TodayStart0800 THEN @TodayStart0800
+                                                ELSE StartTime
+                                            END, 
+                                            EffectiveEndTime
+                                        ) AS RunTimeInSeconds
+                                    FROM 
+                                        ValidProcesses
+                                    WHERE 
+                                        -- 只計算運行時間覆蓋今天8點以後的製程
+                                        (StartTime >= @TodayStart0800 OR EffectiveEndTime > @TodayStart0800)
+                                )
+                                -- 最終結果：計算總運行時間和稼動率
+                                SELECT 
+                                    DeviceID AS MachineName,
+                                    SUM(RunTimeInSeconds) AS TotalRunTimeInSeconds,
+                                    CAST(SUM(RunTimeInSeconds) AS FLOAT) / @TotalTimeInSeconds AS RunTimeRatio
+                                FROM 
+                                    TodayRuntime
                                 GROUP BY 
                                     DeviceID
                                 ORDER BY 
@@ -155,25 +251,92 @@ namespace PMCDash.Controllers
                     break;
                 //聯網=>從skymars撈
                 case "True":
+                    //           sqlStr = @$"--聯網機台單機稼動率
+                    //                       DECLARE @TodayStart0800 DATETIME = DATEADD(HOUR, 8, CAST(CONVERT(DATE, GETDATE()) AS DATETIME));  -- 今天早上8:00
+                    //                       DECLARE @CurrentTime DATETIME = GETDATE();  -- 當前時間
+
+                    //                       -- 計算今天早上8:00到目前的總時間（以秒為單位）
+                    //                       DECLARE @TotalTimeInSeconds INT = DATEDIFF(SECOND, @TodayStart0800, @CurrentTime);
+
+                    //                       -- 計算每個機台的實際運行時間和比例
+                    //                       SELECT 
+                    //                           MachineName, 
+                    //sum(datediff(SECOND,StartDateTime,enddatetime)),
+                    //                            (sum(datediff(SECOND,StartDateTime,enddatetime))*1.0/@TotalTimeInSeconds) AS RunTimeRatio  -- 計算運行時間比例
+                    //                       FROM 
+                    //                           {_ConnectStr.SkyMarsDB}.[dbo].[UtilizationLog]
+                    //                       WHERE 
+                    //                           MachineStatus = 1
+                    //                           AND MachineName = '{device.DeviceName}'
+                    //                           AND StartDateTime >= @TodayStart0800  -- 只納入8:00之後的記錄
+                    //                           AND StartDateTime < @CurrentTime  -- 確保記錄在當前時間之前
+                    //                       GROUP BY 
+                    //                           MachineName
+                    //                       ORDER BY 
+                    //                           MachineName;";
                     sqlStr = @$"--聯網機台單機稼動率
                                 DECLARE @TodayStart0800 DATETIME = DATEADD(HOUR, 8, CAST(CONVERT(DATE, GETDATE()) AS DATETIME));  -- 今天早上8:00
+                                DECLARE @YesterdayStart0800 DATETIME = DATEADD(DAY, -1, @TodayStart0800);  -- 昨天早上8:00
                                 DECLARE @CurrentTime DATETIME = GETDATE();  -- 當前時間
 
                                 -- 計算今天早上8:00到目前的總時間（以秒為單位）
                                 DECLARE @TotalTimeInSeconds INT = DATEDIFF(SECOND, @TodayStart0800, @CurrentTime);
 
-                                -- 計算每個機台的實際運行時間和比例
+                                -- 第一步：先篩選出相關時間段的記錄，減少後續處理的數據量
+                                WITH FilteredRecords AS (
+                                    SELECT 
+                                        MachineName,
+                                        StartDateTime,
+                                        EndDateTime
+                                    FROM 
+                                        {_ConnectStr.SkyMarsDB}.[dbo].[UtilizationLog]
+                                    WHERE 
+                                        MachineStatus = 1
+                                        AND MachineName = '{device.DeviceName}'
+                                        -- 只查詢昨天8點以後的記錄，而且必須與今天8點以後有時間重疊
+                                        AND StartDateTime >= @YesterdayStart0800
+                                        AND (EndDateTime IS NULL OR EndDateTime > @TodayStart0800)
+                                ),
+                                -- 第二步：計算每條記錄在今天8點以後的實際運行時間
+                                TodayRuntime AS (
+                                    SELECT 
+                                        MachineName,
+                                        -- 調整開始時間：如果早於今天8點，則使用今天8點
+                                        CASE 
+                                            WHEN StartDateTime < @TodayStart0800 THEN @TodayStart0800
+                                            ELSE StartDateTime
+                                        END AS AdjustedStartTime,
+                                        -- 調整結束時間：如果尚未結束，則使用當前時間
+                                        CASE 
+                                            WHEN EndDateTime IS NULL THEN @CurrentTime
+                                            ELSE EndDateTime
+                                        END AS AdjustedEndTime,
+                                        -- 計算調整後的時間差
+                                        DATEDIFF(
+                                            SECOND,
+                                            CASE 
+                                                WHEN StartDateTime < @TodayStart0800 THEN @TodayStart0800
+                                                ELSE StartDateTime
+                                            END,
+                                            CASE 
+                                                WHEN EndDateTime IS NULL THEN @CurrentTime
+                                                ELSE EndDateTime
+                                            END
+                                        ) AS RunTimeInSeconds
+                                    FROM 
+                                        FilteredRecords
+                                    WHERE
+                                        -- 確保只計算有效的時間區間
+                                        (StartDateTime < @CurrentTime) AND
+                                        (EndDateTime IS NULL OR EndDateTime > @TodayStart0800)
+                                )
+                                -- 最終結果：計算總運行時間和稼動率
                                 SELECT 
-                                    MachineName, 
-                                    SUM(Duration) AS TotalRunTimeInSeconds,
-                                    CAST(SUM(Duration) AS FLOAT) / @TotalTimeInSeconds AS RunTimeRatio  -- 計算運行時間比例
+                                    MachineName,
+                                    SUM(RunTimeInSeconds) AS TotalRunTimeInSeconds,
+                                    (SUM(RunTimeInSeconds) * 1.0 / @TotalTimeInSeconds) AS RunTimeRatio
                                 FROM 
-                                    {_ConnectStr.SkyMarsDB}.[dbo].[UtilizationLog]
-                                WHERE 
-                                    MachineStatus = 1
-                                    AND MachineName = '{device.DeviceName}'
-                                    AND StartDateTime >= @TodayStart0800  -- 只納入8:00之後的記錄
-                                    AND StartDateTime < @CurrentTime  -- 確保記錄在當前時間之前
+                                    TodayRuntime
                                 GROUP BY 
                                     MachineName
                                 ORDER BY 

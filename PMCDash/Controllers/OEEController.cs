@@ -274,9 +274,16 @@ namespace PMCDash.Controllers
 
 
                             -- 計算比率
-                            DECLARE @Ratio FLOAT, @YieldRatio FLOAT
-                            SET @Ratio = CAST(@TotalOrders AS FLOAT) / @PastOrders
-                            SET @YieldRatio = CAST(@TotalGood AS FLOAT) / @TotalQuantity
+							DECLARE @Ratio FLOAT, @YieldRatio FLOAT
+
+							-- 計算 Ratio
+							SET @Ratio = CAST(@TotalOrders AS FLOAT) / @PastOrders
+
+							-- 判斷 TotalQuantity 是否為 0
+							IF @TotalQuantity is NULL or @TotalQuantity=0
+								SET @YieldRatio = 0
+							ELSE
+								SET @YieldRatio = CAST(@TotalGood AS FLOAT) / @TotalQuantity
 
                             -- 輸出比率
                             SELECT @Ratio AS OrderID_Ratio, @YieldRatio AS YieldRatio";

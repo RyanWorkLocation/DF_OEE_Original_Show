@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "eVmJjC/s1Wq11DF9YHYgsbSWbo2/VOIlNg3/Sn3n0wZxo1yYiLc0PWebU/E7zYiATta27ESSwlEaFil0mfJRow==",
+  "dgSpecHash": "lIIZC4hRSfAEZVHmZClbKxsZxvF+luAAlSsqQc/As6WiHjC5McpD9aTtoeK8PxEgk7s0TBtWIb/tK2IN61J1ZQ==",
   "success": true,
-  "projectFilePath": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_V4-2_串接skymars\\PMCDash\\PMCDash\\PMCDash.csproj",
+  "projectFilePath": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_串接skymars_交付版\\PMCDash\\PMCDash\\PMCDash.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\e11037\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\3.1.10\\microsoft.aspnetcore.authentication.jwtbearer.3.1.10.nupkg.sha512",
     "C:\\Users\\e11037\\.nuget\\packages\\microsoft.aspnetcore.authorization\\1.0.3\\microsoft.aspnetcore.authorization.1.0.3.nupkg.sha512",

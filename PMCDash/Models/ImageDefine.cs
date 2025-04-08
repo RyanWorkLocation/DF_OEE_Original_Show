@@ -20,11 +20,13 @@ namespace PMCDash.Models
 
     public class ImageInfo
     {
-        public ImageInfo(string imageName, double px, double py)
+        public ImageInfo(string imageName, double px, double py, string status)
         {
             ImageName = imageName;
             Px = px;
             Py = py;
+            Status = status;
+
         }
 
         //可標註重要機台名稱
@@ -33,5 +35,7 @@ namespace PMCDash.Models
         public double Px { get; set; }
         //Y位置
         public double Py { get; set; }
+        //機台狀態
+        public string Status { get; set; }
     }
 }

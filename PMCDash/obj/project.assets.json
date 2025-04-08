@@ -6821,11 +6821,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_V4-2_串接skymars\\PMCDash\\PMCDash\\PMCDash.csproj",
+      "projectUniqueName": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_串接skymars_交付版\\PMCDash\\PMCDash\\PMCDash.csproj",
       "projectName": "PMCDash",
-      "projectPath": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_V4-2_串接skymars\\PMCDash\\PMCDash\\PMCDash.csproj",
+      "projectPath": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_串接skymars_交付版\\PMCDash\\PMCDash\\PMCDash.csproj",
       "packagesPath": "C:\\Users\\e11037\\.nuget\\packages\\",
-      "outputPath": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_V4-2_串接skymars\\PMCDash\\PMCDash\\obj\\",
+      "outputPath": "C:\\PMC筆電備份\\OEE戰情看板最新版\\鼎烽修改版_串接skymars_交付版\\PMCDash\\PMCDash\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\e11037\\AppData\\Roaming\\NuGet\\NuGet.Config",
